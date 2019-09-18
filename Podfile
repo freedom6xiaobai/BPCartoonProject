@@ -1,5 +1,5 @@
 # Uncomment the next line to define a global platform for your project
-platform :ios, '9.0'
+platform :ios, '10.0'
 inhibit_all_warnings!
 
 
@@ -24,6 +24,8 @@ target 'BPCartoonProject' do
   pod 'MJRefresh'
   pod 'HandyJSON', '~> 5.0.0'
   pod 'SkeletonView'
+  pod 'Reveal-SDK',                   :configurations => ['Debug']
+
 
   # Pods for BPCartoonProject
 

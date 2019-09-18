@@ -20,6 +20,9 @@ class BPNewEstTableCell: UITableViewCell {
         self.button.frame = CGRect(x: 10, y: self.mainImageView.frame.maxY+5, width: 100, height: 40)
         self.addSubview(self.titleLabel)
         self.titleLabel.frame = CGRect(x: self.button.frame.maxX + 10, y: self.button.frame.minY , width: KScreenWidth - self.button.frame.maxX - 20, height: 40)
+        self.addSubview(self.authorLabel)
+        self.authorLabel.frame = CGRect(x: 0 , y: self.titleLabel.frame.minY, width: KScreenWidth - 10, height: 40)
+
     }
 
     //MARK: - 2、不同业务处理之间的方法以
@@ -29,8 +32,9 @@ class BPNewEstTableCell: UITableViewCell {
 
             self.mainImageView.kf.setImage(with: URL(string: model.cover!), placeholder: nil, options:[.processor(WebPProcessor.default), .cacheSerializer(WebPSerializer.default)], progressBlock: nil, completionHandler: nil)
 
-            self.titleLabel.text = "\(String(describing: model.comicName!)) 最新:\(String(describing: model.description!))"
+            self.titleLabel.text = "\(String(describing: model.comicName!)) \n最新:\(String(describing: model.description!))"
 
+            self.authorLabel.text = model.author!
         }
     }
     //MARK: - Network 3、网络请求
@@ -59,7 +63,7 @@ class BPNewEstTableCell: UITableViewCell {
     lazy var button: UIButton = {
         let btn = UIButton.init(type: .custom)
         btn.backgroundColor = DominantColor
-        btn.setTitle("阅读漫画", for: .normal)
+        btn.setTitle("漫画详情", for: .normal)
         btn.setTitleColor(UIColor.white, for: .normal)
         btn.titleLabel?.font = UIFont.systemFont(ofSize: 14)
         btn.layer.masksToBounds = true
@@ -71,7 +75,17 @@ class BPNewEstTableCell: UITableViewCell {
     lazy var titleLabel:UILabel = {
         let label = UILabel.init()
         label.textColor = UIColor.gray
-        label.font = UIFont.systemFont(ofSize: 16)
+        label.font = UIFont.systemFont(ofSize: 13)
+        label.numberOfLines = 2
+        return label;
+    }()
+
+    //作者
+    lazy var authorLabel:UILabel = {
+        let label = UILabel.init()
+        label.textColor = UIColor.gray
+        label.textAlignment = NSTextAlignment.right
+        label.font = UIFont.systemFont(ofSize: 13)
         return label;
     }()
 

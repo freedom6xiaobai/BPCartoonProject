@@ -15,11 +15,9 @@ let ApiProvider = MoyaProvider<UApi>(requestClosure: timeoutClosure)
 let ApiLoadingProvider = MoyaProvider<UApi>(requestClosure: timeoutClosure, plugins: [LoadingPlugin])
 
 enum UApi {
-    case searchHot//搜索热门
-    case searchRelative(inputText: String)//相关搜索
-    case searchResult(argCon: Int, q: String)//搜索结果
-
     case todayList(day: Int,page: Int)//今日列表
+    case findList//发现列表
+
 
 }
 
@@ -28,11 +26,8 @@ extension UApi: TargetType {
 
     var path: String {
         switch self {
-        case .searchHot: return "search/hotkeywordsnew"
-        case .searchRelative: return "search/relative"
-        case .searchResult: return "search/searchResult"
-
-        case .todayList: return "list/todayRecommendList"
+            case .todayList: return "list/todayRecommendList"
+            case .findList: return "comic/getDetectListV4_5"
         }
     }
 
@@ -47,17 +42,11 @@ extension UApi: TargetType {
                          "systemVersion":UIDevice.current.systemVersion,
                          "version": Bundle.main.infoDictionary!["CFBundleShortVersionString"]!]
         switch self { ///拼参数
-        case .searchRelative(let inputText):
-            parmeters["inputText"] = inputText
-
-        case .searchResult(let argCon, let q):
-            parmeters["argCon"] = argCon
-            parmeters["q"] = q
-
-
+            //今日
         case .todayList(let day, let page):
             parmeters["day"] = day
             parmeters["page"] = max(0, page)
+
 
         default: break
         }

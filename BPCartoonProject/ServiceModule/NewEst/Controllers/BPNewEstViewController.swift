@@ -9,66 +9,38 @@
 import UIKit
 
 class BPNewEstViewController: BPBaseViewController {
-    private let cellIndentifier = "BPNewEstTableCell"
-    private let FooterIndentifier = "U17TodayFooterView"
-    private let HeaderIndentifier = "U17TodayHeaderView"
-
-    private var page:Int = 0
 
     //MARK: - life cyle 1、控制器生命周期
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(true)
-    }
-
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidAppear(true)
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = UIColor.white
         self.navigationItem.title = "今日更新"
-        self.view.addSubview(tableView)
         createSubViewUI()
-        loadData(more: false)
-        refreshData()
+        self.view.addSubview(self.menuView)
+        self.view.addSubview(self.scrollview)
+        setupSubViewControllers()
+        self.menuView.setSelectedTitleIndex(index: 0)
+        self.scrollViewDidEndScrollingAnimation(self.scrollview)
     }
 
     //MARK: - 2、不同业务处理之间的方法以
-
-    //MARK: - Network 3、网络请求
-    ///刷新
-    func refreshData() {
-        self.tableView.refreshHeader = BPRefreshHeader{[weak self] in self?.loadData(more: false)}
-        self.tableView.refreshFooter = BPRefreshFooter{[weak self] in self?.loadData(more: true)}
-    }
-
-    //网络请求数据
-    func loadData(more:Bool) {
-        page = (more ? (page + 1) : 0)
-        ApiLoadingProvider.request(UApi.todayList(day: 1, page: page),model: DayDataModel.self) { [weak self](returnData) in
-            //结束刷新
-            self?.tableView.refreshHeader.endRefreshing()
-            if returnData?.hasMore == false {
-                self?.tableView.refreshFooter.endRefreshingWithNoMoreData()
-            } else {
-                self?.tableView.refreshFooter.endRefreshing()
-            }
-            if more == false { self?.dayDataList.removeAll() }
-            self?.dayDataList.append(contentsOf: returnData?.comics ?? [])
-            self?.tableView.reloadData()
+    func setupSubViewControllers() {
+        for _ in 0..<7 {
+            let newBaseVC = BPNewBaseViewController.init()
+            self.addChild(newBaseVC)
         }
     }
+    //MARK: - Network 3、网络请求
 
     //MARK: - Action Event 4、响应事件
-
-    //MARK: - Call back 5、回调事件
     ///点击搜索事件
     @objc func searchBtnAction(btn:UIButton) {
         print("searchBtnAction")
     }
-    //MARK: - Delegate 6、代理、数据源
 
+    //MARK: - Call back 5、回调事件
+
+    //MARK: - Delegate 6、代理、数据源
 
     //MARK: - interface 7、UI处理
     func createSubViewUI() {
@@ -79,58 +51,55 @@ class BPNewEstViewController: BPBaseViewController {
         btn.addTarget(self, action: #selector(searchBtnAction), for: .touchUpInside)
         let bar = UIBarButtonItem.init(customView: btn)
         self.navigationItem.rightBarButtonItem = bar
+
+
     }
+
     //MARK: - lazy loading 8、懒加载
-    private lazy var tableView : UITableView = {
-        let tabView = UITableView.init(frame: CGRect(x: 0, y: 64, width: KScreenWidth, height: KScreenHeigth - 49-64), style: .grouped)
-        tabView.delegate = self
-        tabView.dataSource = self
-        tabView.backgroundColor = UIColor.init(red: 245/255.0, green: 245/255.0, blue: 245/255.0, alpha: 1)
-        tabView.register(BPNewEstTableCell.self, forCellReuseIdentifier: cellIndentifier)
-        tabView.separatorStyle = UITableViewCell.SeparatorStyle.none
-        return tabView
+    lazy var menuView:BPMenuView = {
+        let menu = BPMenuView.init(frame: CGRect(x: 0, y: KNavigationBarHeight, width: KScreenWidth, height: 50))
+        menu.delegate = self
+        return menu
     }()
 
-    private var dayDataList = [DayItemModel]()
-
-
+    lazy var scrollview:UIScrollView = {
+        let scroll = UIScrollView.init()
+        scroll.frame = CGRect(x: 0, y: KNavigationBarHeight+50, width: KScreenWidth, height: KScreenHeight - 50 - KTabBarHeight  - KNavigationBarHeight)
+        scroll.contentOffset = CGPoint(x: 0, y: 0)
+        scroll.contentSize = CGSize(width: KScreenWidth * 7, height: KScreenHeight - 50 - KTabBarHeight - KNavigationBarHeight)
+        scroll.isPagingEnabled = true
+        scroll.showsHorizontalScrollIndicator = false
+        scroll.delegate = self
+        return scroll
+    }()
 }
 
-///MARK: - tableViewDelegate 代理回调
-extension BPNewEstViewController : UITableViewDelegate, UITableViewDataSource {
+///MARK:ScrollViewDelegate
+extension BPNewEstViewController:UIScrollViewDelegate{
+    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+        let offetX  = scrollview.contentOffset.x
+        let index:NSInteger = NSInteger(offetX/KScreenWidth)
+        let baseVC:BPNewBaseViewController = self.children[index] as! BPNewBaseViewController
+        baseVC.indexDay = index
+        self.menuView.setSelectedTitleIndex(index: index)
+        if baseVC.isViewLoaded {
+            return
+        }
 
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return self.dayDataList.count
+        baseVC.view.frame = CGRect(x: KScreenWidth * CGFloat(index), y: 0, width: self.scrollview.frame.width, height: self.scrollview.frame.height)
+        self.scrollview.addSubview(baseVC.view)
     }
 
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 1
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        self .scrollViewDidEndScrollingAnimation(scrollview)
+        if !scrollView.isEqual(self.scrollview){
+            return
+        }
     }
-
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return KScreenWidth + 35
-    }
-
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 0.01
-    }
-
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 0.01
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell:BPNewEstTableCell = tableView.dequeueReusableCell(withIdentifier: cellIndentifier, for: indexPath) as! BPNewEstTableCell
-        cell.backgroundColor = UIColor.init(red: 245/255.0, green: 245/255.0, blue: 245/255.0, alpha: 1)
-        cell.selectionStyle = UITableViewCell.SelectionStyle.none
-        cell.model = self.dayDataList[indexPath.section]
-        return cell
-    }
-
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        NSLog("123")
-    }
-
 }
 
-
+extension BPNewEstViewController : MenuViewDelegate {
+    func menuBar(from: NSInteger, to: NSInteger) {
+        self.scrollview.setContentOffset(CGPoint(x: KScreenWidth * CGFloat(to), y: 0), animated: true)
+    }
+}
